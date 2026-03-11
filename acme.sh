@@ -142,13 +142,13 @@ fi
 }
 
 checktls(){
-if [[ -f /root/ygkkkca/cert.crt && -f /root/ygkkkca/private.key ]] && [[ -s /root/ygkkkca/cert.crt && -s /root/ygkkkca/private.key ]]; then
+if [[ -f /etc/fullchain.pem && -f /etc/privkey.pem ]] && [[ -s /etc/fullchain.pem && -s /etc/privkey.pem ]]; then
 cronac
-green "域名证书申请成功或已存在！域名证书（cert.crt）和密钥（private.key）已保存到 /root/ygkkkca文件夹内" 
+green "域名证书申请成功或已存在！域名证书（fullchain.pem）和密钥（privkey.pem）已保存到 /ect文件夹内" 
 yellow "公钥文件crt路径如下，可直接复制"
-green "/root/ygkkkca/cert.crt"
+green "/etc/fullchain.pem"
 yellow "密钥文件key路径如下，可直接复制"
-green "/root/ygkkkca/private.key"
+green "/etc/privkey.pem"
 ym=`bash ~/.acme.sh/acme.sh --list | tail -1 | awk '{print $1}'`
 echo $ym > /root/ygkkkca/ca.log
 if [[ -f '/etc/hysteria/config.json' ]]; then
@@ -182,7 +182,7 @@ fi
 }
 
 installCA(){
-bash ~/.acme.sh/acme.sh --install-cert -d ${ym} --key-file /root/ygkkkca/private.key --fullchain-file /root/ygkkkca/cert.crt --ecc
+bash ~/.acme.sh/acme.sh --install-cert -d ${ym} --key-file /etc/privkey.pem --fullchain-file /etc/fullchain.pem --ecc
 }
 
 checkip(){
@@ -194,9 +194,9 @@ vpsip="$v6 或者 $v4"
 else
 vpsip=$v4
 fi
-domainIP=$(dig @8.8.8.8 +time=2 +short "$ym" 2>/dev/null | grep -m1 '^[0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+$')
-if echo $domainIP | grep -q "network unreachable\|timed out" || [[ -z $domainIP ]]; then
-domainIP=$(dig @2001:4860:4860::8888 +time=2 aaaa +short "$ym" 2>/dev/null | grep -m1 ':')
+domain/etc/privkey.pem=$(dig @8.8.8.8 +time=2 +short "$ym" 2>/dev/null | grep -m1 '^[0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+$')
+if echo $domain/etc/privkey.pem | grep -q "network unreachable\|timed out" || [[ -z $domain/etc/privkey.pem ]]; then
+domain/etc/privkey.pem=$(dig @2001:4860:4860::8888 +time=2 aaaa +short "$ym" 2>/dev/null | grep -m1 ':')
 fi
 if echo $domainIP | grep -q "network unreachable\|timed out" || [[ -z $domainIP ]] ; then
 red "未解析出IP，请检查域名是否输入有误" 
@@ -206,7 +206,8 @@ yellow "2：否！退出脚本"
 readp "请选择：" menu
 if [ "$menu" = "1" ] ; then
 green "VPS本地的IP：$vpsip"
-readp "请输入域名解析的IP，与VPS本地IP($vpsip)保持一致：" domainIP
+domainIP=$v4
+green "强制匹配IP：$domainIP"
 else
 exit
 fi
@@ -380,7 +381,7 @@ bash ~/.acme.sh/acme.sh --list
 acmeshow(){
 if [[ -n $(~/.acme.sh/acme.sh -v 2>/dev/null) ]]; then
 caacme1=`bash ~/.acme.sh/acme.sh --list | tail -1 | awk '{print $1}'`
-if [[ -n $caacme1 && ! $caacme1 == "Main_Domain" ]] && [[ -f /root/ygkkkca/cert.crt && -f /root/ygkkkca/private.key && -s /root/ygkkkca/cert.crt && -s /root/ygkkkca/private.key ]]; then
+if [[ -n $caacme1 && ! $caacme1 == "Main_Domain" ]] && [[ -f /etc/fullchain.pem && -f /etc/privkey.pem && -s /etc/fullchain.pem && -s /etc/privkey.pem ]]; then
 caacme=$caacme1
 else
 caacme='无证书申请记录'
@@ -458,8 +459,8 @@ yellow "一、脚本不支持多IP的VPS，SSH登录的IP与VPS共网IP必须一
 yellow "二、80端口模式仅支持单域名证书申请，在80端口不被占用的情况下支持自动续期"
 yellow "三、DNS API模式不支持freenom免费域名申请，支持单域名与泛域名证书申请，无条件自动续期"
 yellow "四、泛域名申请前须设置一个名称为 * 字符的解析记录 (输入格式：*.一级/二级主域)"
-yellow "公钥文件crt保存路径：/root/ygkkkca/cert.crt"
-yellow "密钥文件key保存路径：/root/ygkkkca/private.key"
+yellow "公钥文件crt保存路径：/etc/fullchain.pem"
+yellow "密钥文件key保存路径：/etc/privkey.pem"
 echo
 red "========================================================================="
 acmeshow
