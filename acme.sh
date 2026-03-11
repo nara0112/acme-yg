@@ -1,26 +1,34 @@
 #!/bin/bash
+export LANG=en_US.UTF-8
 
-green(){ echo -e "\033[32m$1\033[0m"; }
-red(){ echo -e "\033[31m$1\033[0m"; }
-yellow(){ echo -e "\033[33m$1\033[0m"; }
+green(){ echo -e "\033[32m\033[01m$1\033[0m";}
+red(){ echo -e "\033[31m\033[01m$1\033[0m";}
+yellow(){ echo -e "\033[33m\033[01m$1\033[0m";}
+blue(){ echo -e "\033[36m\033[01m$1\033[0m";}
 
 [[ $EUID -ne 0 ]] && echo "请使用root运行" && exit
 
-ACME_HOME="/root/.acme.sh"
-ACME="$ACME_HOME/acme.sh"
-
 detect_os(){
+
 if grep -qi openwrt /etc/os-release 2>/dev/null; then
 release="OpenWrt"
+
 elif [ -f /etc/redhat-release ]; then
 release="Centos"
+
 elif grep -qi debian /etc/os-release; then
 release="Debian"
+
 elif grep -qi ubuntu /etc/os-release; then
 release="Ubuntu"
+
+elif grep -qi alpine /etc/os-release; then
+release="Alpine"
+
 else
 release="Unknown"
 fi
+
 }
 
 install_dep(){
@@ -28,33 +36,36 @@ install_dep(){
 green "安装依赖..."
 
 if [[ $release == "OpenWrt" ]]; then
+
 opkg update
-opkg install curl wget socat jq tar openssl-util bind-dig
+opkg install curl wget socat tar jq openssl-util bind-dig
+
 /etc/init.d/cron enable
 /etc/init.d/cron start
 
 elif command -v apt >/dev/null 2>&1; then
+
 apt update
 apt install -y curl wget socat jq dnsutils cron
 
 elif command -v yum >/dev/null 2>&1; then
+
 yum install -y curl wget socat jq bind-utils cronie
+
 fi
+
 }
 
 install_acme(){
 
-if [ ! -f "$ACME" ]; then
-green "安装 acme.sh..."
+if [ ! -d ~/.acme.sh ]; then
+
+green "安装acme.sh..."
+
 curl https://get.acme.sh | sh
 
-if [ ! -f "$ACME" ]; then
-red "acme.sh 安装失败"
-exit 1
-fi
 fi
 
-source ~/.bashrc 2>/dev/null
 }
 
 issue_standalone(){
@@ -63,12 +74,13 @@ read -p "请输入域名: " DOMAIN
 
 green "开始申请证书..."
 
-$ACME --issue \
+~/.acme.sh/acme.sh --issue \
 --standalone \
 -d $DOMAIN \
 -k ec-256
 
 install_cert $DOMAIN
+
 }
 
 issue_dns(){
@@ -85,47 +97,54 @@ read -p "选择: " dns
 case $dns in
 
 1)
+
 read -p "CF_Key: " CF_Key
 read -p "CF_Email: " CF_Email
 
 export CF_Key
 export CF_Email
 
-$ACME --issue \
+~/.acme.sh/acme.sh --issue \
 --dns dns_cf \
 -d $DOMAIN \
 -k ec-256
+
 ;;
 
 2)
+
 read -p "Ali_Key: " Ali_Key
 read -p "Ali_Secret: " Ali_Secret
 
 export Ali_Key
 export Ali_Secret
 
-$ACME --issue \
+~/.acme.sh/acme.sh --issue \
 --dns dns_ali \
 -d $DOMAIN \
 -k ec-256
+
 ;;
 
 3)
+
 read -p "DP_Id: " DP_Id
 read -p "DP_Key: " DP_Key
 
 export DP_Id
 export DP_Key
 
-$ACME --issue \
+~/.acme.sh/acme.sh --issue \
 --dns dns_dp \
 -d $DOMAIN \
 -k ec-256
+
 ;;
 
 esac
 
 install_cert $DOMAIN
+
 }
 
 install_cert(){
@@ -134,39 +153,46 @@ DOMAIN=$1
 
 mkdir -p /etc/ssl/acme
 
-$ACME --install-cert -d $DOMAIN \
+~/.acme.sh/acme.sh --install-cert -d $DOMAIN \
 --key-file /etc/privkey.pem \
---fullchain-file /etc/fullchain.pem \
+--fullchain-file /etc/fullchain.pem
 
 green "证书安装完成"
+
 echo "/etc/privkey.pem"
 echo "/etc/fullchain.pem"
+
 }
 
 list_cert(){
 
-$ACME --list
+~/.acme.sh/acme.sh --list
+
 }
 
 renew_cert(){
 
 green "开始续期证书..."
 
-$ACME --cron
+~/.acme.sh/acme.sh --cron
+
 }
 
 uninstall_acme(){
 
-$ACME --uninstall
+~/.acme.sh/acme.sh --uninstall
+
 rm -rf ~/.acme.sh
 rm -rf /etc/ssl/acme
 
 green "acme.sh 已卸载"
+
 }
 
 menu(){
 
 clear
+
 echo "================================"
 echo " ACME 证书管理脚本"
 echo "================================"
@@ -190,6 +216,7 @@ case "$num" in
 0) exit ;;
 
 esac
+
 }
 
 detect_os
