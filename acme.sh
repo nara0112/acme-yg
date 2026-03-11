@@ -212,8 +212,7 @@ yellow "2：否！退出脚本"
 readp "请选择：" menu
 if [ "$menu" = "1" ] ; then
 green "VPS本地的IP：$vpsip"
-domainIP=$v4
-green "强行匹配IP：$domainIP"
+readp "请输入域名解析的IP，与VPS本地IP($vpsip)保持一致：" domainIP
 else
 exit
 fi
