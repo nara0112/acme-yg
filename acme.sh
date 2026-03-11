@@ -6,6 +6,9 @@ yellow(){ echo -e "\033[33m$1\033[0m"; }
 
 [[ $EUID -ne 0 ]] && echo "请使用root运行" && exit
 
+ACME_HOME="/root/.acme.sh"
+ACME="$ACME_HOME/acme.sh"
+
 detect_os(){
 if grep -qi openwrt /etc/os-release 2>/dev/null; then
 release="OpenWrt"
@@ -21,6 +24,7 @@ fi
 }
 
 install_dep(){
+
 green "安装依赖..."
 
 if [[ $release == "OpenWrt" ]]; then
@@ -39,10 +43,18 @@ fi
 }
 
 install_acme(){
-if [ ! -d ~/.acme.sh ]; then
-green "安装acme.sh..."
+
+if [ ! -f "$ACME" ]; then
+green "安装 acme.sh..."
 curl https://get.acme.sh | sh
+
+if [ ! -f "$ACME" ]; then
+red "acme.sh 安装失败"
+exit 1
 fi
+fi
+
+source ~/.bashrc 2>/dev/null
 }
 
 issue_standalone(){
@@ -51,7 +63,7 @@ read -p "请输入域名: " DOMAIN
 
 green "开始申请证书..."
 
-~/.acme.sh/acme.sh --issue \
+$ACME --issue \
 --standalone \
 -d $DOMAIN \
 -k ec-256
@@ -67,6 +79,7 @@ echo "选择DNS服务商"
 echo "1 Cloudflare"
 echo "2 Aliyun"
 echo "3 DNSPod"
+
 read -p "选择: " dns
 
 case $dns in
@@ -74,10 +87,11 @@ case $dns in
 1)
 read -p "CF_Key: " CF_Key
 read -p "CF_Email: " CF_Email
+
 export CF_Key
 export CF_Email
 
-~/.acme.sh/acme.sh --issue \
+$ACME --issue \
 --dns dns_cf \
 -d $DOMAIN \
 -k ec-256
@@ -86,10 +100,11 @@ export CF_Email
 2)
 read -p "Ali_Key: " Ali_Key
 read -p "Ali_Secret: " Ali_Secret
+
 export Ali_Key
 export Ali_Secret
 
-~/.acme.sh/acme.sh --issue \
+$ACME --issue \
 --dns dns_ali \
 -d $DOMAIN \
 -k ec-256
@@ -98,10 +113,11 @@ export Ali_Secret
 3)
 read -p "DP_Id: " DP_Id
 read -p "DP_Key: " DP_Key
+
 export DP_Id
 export DP_Key
 
-~/.acme.sh/acme.sh --issue \
+$ACME --issue \
 --dns dns_dp \
 -d $DOMAIN \
 -k ec-256
@@ -118,7 +134,7 @@ DOMAIN=$1
 
 mkdir -p /etc/ssl/acme
 
-~/.acme.sh/acme.sh --install-cert -d $DOMAIN \
+$ACME --install-cert -d $DOMAIN \
 --key-file /etc/privkey.pem \
 --fullchain-file /etc/fullchain.pem \
 
@@ -129,19 +145,19 @@ echo "/etc/fullchain.pem"
 
 list_cert(){
 
-~/.acme.sh/acme.sh --list
+$ACME --list
 }
 
 renew_cert(){
 
 green "开始续期证书..."
 
-~/.acme.sh/acme.sh --cron
+$ACME --cron
 }
 
 uninstall_acme(){
 
-~/.acme.sh/acme.sh --uninstall
+$ACME --uninstall
 rm -rf ~/.acme.sh
 rm -rf /etc/ssl/acme
 
