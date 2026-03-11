@@ -2,11 +2,11 @@
 -------------------------------------
 ### 一键脚本
 ```
-bash <(curl -Ls https://raw.githubusercontent.com/yonggekkk/acme-yg/main/acme.sh)
+bash <(curl -Ls https://raw.githubusercontent.com/nara0112/acme-yg/main/acme.sh)
 ```
 或者
 ```
-bash <(wget -qO- https://raw.githubusercontent.com/yonggekkk/acme-yg/main/acme.sh)
+bash <(wget -qO- https://raw.githubusercontent.com/nara0112/acme-yg/main/acme.sh)
 ```
 ---------------------------------------
 #### 功能与特点：
