@@ -150,7 +150,7 @@ fi
 checktls(){
 if [[ -f /etc/fullchain.pem && -f /etc/privkey.pem ]] && [[ -s /etc/fullchain.pem && -s /etc/privkey.pem ]]; then
 cronac
-green "域名证书申请成功或已存在！域名证书（cert.crt）和密钥（private.key）已保存到 /root/ygkkkca文件夹内" 
+green "域名证书申请成功或已存在！域名证书（fullchain.pem）和密钥（privkey.pem）已保存到 /etc文件夹内" 
 yellow "公钥文件crt路径如下，可直接复制"
 green "/etc/fullchain.pem"
 yellow "密钥文件key路径如下，可直接复制"
@@ -212,7 +212,8 @@ yellow "2：否！退出脚本"
 readp "请选择：" menu
 if [ "$menu" = "1" ] ; then
 green "VPS本地的IP：$vpsip"
-readp "请输入域名解析的IP，与VPS本地IP($vpsip)保持一致：" domainIP
+domainIP=$v4
+green "强行匹配IP：$domainIP"
 else
 exit
 fi
